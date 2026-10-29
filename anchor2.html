@@ -1,0 +1,727 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Habit Quest</title>
+<style>
+:root {
+  --primary:#5b67d8;
+  --secondary:#9083e8;
+  --bg:#f4f6fc;
+  --text:#273451;
+  --light:#eef0ff;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Malgun Gothic",Arial,sans-serif;
+}
+header {
+  background:linear-gradient(120deg,var(--primary),var(--secondary));
+  padding:25px 15px;
+  color:white;
+  text-align:center;
+}
+header h1 { margin:0 0 8px; font-size:27px; }
+header p { margin:0; font-size:14px; }
+main {
+  max-width:700px;
+  margin:24px auto;
+  padding:0 15px 35px;
+}
+.panel {
+  background:white;
+  border-radius:18px;
+  padding:25px;
+  box-shadow:0 6px 22px #27345112;
+}
+h2 { margin-top:0; font-size:23px; }
+h3 { line-height:1.5; }
+p { line-height:1.75; }
+.small { font-size:13px; color:#737d94; }
+.progress {
+  height:11px;
+  background:#e1e5f3;
+  border-radius:20px;
+  margin-bottom:20px;
+  overflow:hidden;
+}
+#progressBar {
+  height:100%;
+  width:0%;
+  background:var(--primary);
+  transition:width .3s;
+}
+.tag {
+  display:inline-block;
+  background:var(--light);
+  color:var(--primary);
+  padding:8px 13px;
+  border-radius:30px;
+  font-size:13px;
+  font-weight:bold;
+  margin-bottom:15px;
+}
+button {
+  border:0;
+  border-radius:11px;
+  padding:14px 17px;
+  font-size:15px;
+  font-weight:bold;
+  cursor:pointer;
+  font-family:inherit;
+}
+button:disabled { opacity:.55; cursor:not-allowed; }
+.primary { background:var(--primary); color:white; }
+.secondary { background:var(--light); color:var(--primary); }
+.actions {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:20px;
+}
+.actions button { flex:1; }
+.card {
+  background:var(--light);
+  border-radius:15px;
+  padding:22px;
+  margin:17px 0;
+}
+.card h3 {
+  color:var(--primary);
+  font-size:24px;
+  margin:0 0 13px;
+}
+.example {
+  background:white;
+  border-left:4px solid var(--primary);
+  border-radius:8px;
+  padding:13px;
+  margin-top:15px;
+  line-height:1.8;
+}
+.reading {
+  background:#f5f7ff;
+  border-radius:13px;
+  padding:18px;
+  line-height:2;
+  font-size:15px;
+}
+.reading strong { color:var(--primary); }
+.option {
+  display:block;
+  width:100%;
+  background:#f2f4fb;
+  text-align:left;
+  margin:9px 0;
+  border:2px solid transparent;
+  color:var(--text);
+}
+.option:hover:not(:disabled) { background:#e7ebff; }
+.option.correct {
+  background:#e0f7eb;
+  border-color:#29a673;
+}
+.option.wrong {
+  background:#ffebed;
+  border-color:#e46b78;
+}
+.feedback {
+  padding:14px;
+  border-radius:11px;
+  margin-top:15px;
+  line-height:1.7;
+  font-size:14px;
+}
+.good { background:#e0f7eb; color:#126b4b; }
+.bad { background:#fff0e9; color:#a04d34; }
+.hintBox { background:#fff6db; color:#795c22; }
+input {
+  width:100%;
+  padding:15px;
+  border:2px solid #d9deed;
+  border-radius:11px;
+  font-size:17px;
+}
+input:focus {
+  outline:none;
+  border-color:var(--primary);
+}
+.score {
+  text-align:center;
+  font-size:45px;
+  font-weight:bold;
+  color:var(--primary);
+}
+.review {
+  border-bottom:1px solid #e5e8f2;
+  padding:13px 0;
+  line-height:1.7;
+}
+footer {
+  text-align:center;
+  font-size:12px;
+  color:#939aae;
+  padding:15px;
+}
+@media(max-width:450px) {
+  .panel { padding:19px; }
+  h2 { font-size:21px; }
+  .card h3 { font-size:21px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Study Habit Quest</h1>
+  <p>영어 표현 6개를 배우고 학습 미션을 완료해 보세요!</p>
+</header>
+
+<main>
+  <div class="progress">
+    <div id="progressBar"></div>
+  </div>
+  <section class="panel" id="app"></section>
+</main>
+
+<footer>Grade 8 English Vocabulary Activity</footer>
+
+<script>
+const vocabulary = [
+  {
+    word:"keep track of",
+    meaning:"~을 기록하다 / 계속 파악하다",
+    definition:"정보나 진행 상황을 지속적으로 기록하고 확인하는 것",
+    example:"I keep track of my study time every day.",
+    translation:"나는 매일 공부 시간을 기록한다."
+  },
+  {
+    word:"take a break",
+    meaning:"휴식을 취하다",
+    definition:"하던 활동을 잠시 멈추고 쉬는 것",
+    example:"I take a break after studying for an hour.",
+    translation:"나는 한 시간 공부한 후 휴식을 취한다."
+  },
+  {
+    word:"stay away from",
+    meaning:"~을 멀리하다 / 피하다",
+    definition:"어떤 사람이나 물건, 상황을 가까이하지 않는 것",
+    example:"I stay away from my phone while studying.",
+    translation:"나는 공부하는 동안 휴대폰을 멀리한다."
+  },
+  {
+    word:"get enough sleep",
+    meaning:"충분한 수면을 취하다",
+    definition:"몸에 필요한 만큼 충분히 잠을 자는 것",
+    example:"I get enough sleep before an exam.",
+    translation:"나는 시험 전에 충분히 잔다."
+  },
+  {
+    word:"deal with",
+    meaning:"~에 대처하다 / 처리하다",
+    definition:"문제나 어려운 상황을 해결하거나 관리하는 것",
+    example:"I deal with stress by listening to music.",
+    translation:"나는 음악을 들으며 스트레스에 대처한다."
+  },
+  {
+    word:"stick to",
+    meaning:"~을 꾸준히 지키다 / 고수하다",
+    definition:"계획이나 약속 등을 계속해서 따르는 것",
+    example:"I stick to my study plan every week.",
+    translation:"나는 매주 공부 계획을 꾸준히 지킨다."
+  }
+];
+
+const readingText = `
+Jisoo wanted to improve her study habits before the
+exam period. She began to <strong>keep track of</strong>
+how long she studied each day. She also learned when
+to <strong>take a break</strong> instead of studying
+for too long.<br><br>
+While studying, she tried to
+<strong>stay away from</strong> her phone and made sure
+to <strong>get enough sleep</strong>. When she felt
+stressed, she learned how to <strong>deal with</strong>
+it by taking a short walk. After several weeks,
+she found it easier to <strong>stick to</strong>
+her new routine.
+`;
+
+const contextQuestions = [
+  {
+    situation:"Jisoo writes down how many hours she studies every day.",
+    sentence:"She wants to ______ her study time.",
+    answer:"keep track of"
+  },
+  {
+    situation:"Minho feels tired after studying for two hours.",
+    sentence:"He decides to ______.",
+    answer:"take a break"
+  },
+  {
+    situation:"Sora doesn't want her phone to distract her.",
+    sentence:"She tries to ______ her phone.",
+    answer:"stay away from"
+  },
+  {
+    situation:"Yuna goes to bed early to feel rested.",
+    sentence:"She wants to ______.",
+    answer:"get enough sleep"
+  },
+  {
+    situation:"Jun feels nervous before an important test.",
+    sentence:"He learns how to ______ stress.",
+    answer:"deal with"
+  },
+  {
+    situation:"Hana follows the same study schedule every day.",
+    sentence:"She tries to ______ her routine.",
+    answer:"stick to"
+  }
+];
+
+const typingQuestions = [
+  {sentence:"I use a notebook to ______ my homework.",answer:"keep track of"},
+  {sentence:"After 40 minutes of studying, I need to ______.",answer:"take a break"},
+  {sentence:"I try to ______ noisy places when I study.",answer:"stay away from"},
+  {sentence:"I go to bed early to ______.",answer:"get enough sleep"},
+  {sentence:"I listen to music to ______ stress.",answer:"deal with"},
+  {sentence:"I make a weekly plan and try to ______ it.",answer:"stick to"}
+];
+
+let index=0;
+let score=0;
+let attempts=0;
+let finished=false;
+let mistakes=[];
+let matchOrder=[];
+let quizOrder=[];
+let typingOrder=[];
+
+const app=document.getElementById("app");
+
+function shuffle(array) {
+  const result=[...array];
+  for(let i=result.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [result[i],result[j]]=[result[j],result[i]];
+  }
+  return result;
+}
+
+function safe(text) {
+  return String(text).replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",
+    '"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+function progress(value) {
+  document.getElementById("progressBar").style.width=value+"%";
+}
+
+function show(html) {
+  app.innerHTML=html;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function start() {
+  score=0;
+  index=0;
+  attempts=0;
+  finished=false;
+  mistakes=[];
+  matchOrder=shuffle(vocabulary);
+  quizOrder=shuffle(contextQuestions);
+  typingOrder=shuffle(typingQuestions);
+  showReading();
+}
+
+function showIntro() {
+  progress(0);
+  show(`
+    <span class="tag">10분 개별 어휘 학습</span>
+    <h2>Study Habit Quest 🌟</h2>
+    <p>좋은 공부 습관과 관련된 영어 표현 6개를 배워 보세요.</p>
+    <div class="card">
+      <h3>🎯 오늘의 미션</h3>
+      <p>📖 1. 지문 읽기 및 표현 학습</p>
+      <p>🔗 2. 영어 표현과 뜻 연결하기</p>
+      <p>🧠 3. 상황에 알맞은 표현 고르기</p>
+      <p>✍️ 4. 빈칸에 표현 직접 입력하기</p>
+      <p>🏆 5. 점수 확인 및 복습</p>
+    </div>
+    <p>문제마다 정답 기회는 2번이에요.
+    틀리더라도 다시 도전해 보세요!</p>
+    <button class="primary" onclick="start()">학습 시작하기 →</button>
+  `);
+}
+
+function showReading() {
+  progress(4);
+  show(`
+    <span class="tag">Reading · 지문 읽기</span>
+    <h2>Building Better Study Habits 📖</h2>
+    <p>지문을 읽고 파란색으로 표시된 표현에 집중해 보세요.</p>
+    <div class="reading">${readingText}</div>
+    <div class="actions">
+      <button class="primary" onclick="beginLearn()">
+        표현 학습하기 →
+      </button>
+    </div>
+  `);
+}
+
+function beginLearn() {
+  index=0;
+  showLearn();
+}
+
+function showLearn() {
+  progress(9+(index/6)*17);
+  const w=vocabulary[index];
+  show(`
+    <span class="tag">표현 학습 · ${index+1}/6</span>
+    <h2>오늘의 영어 표현</h2>
+    <div class="card">
+      <h3>${w.word}</h3>
+      <p><b>뜻:</b> ${w.meaning}</p>
+      <p><b>설명:</b> ${w.definition}</p>
+      <div class="example">
+        <b>예문</b><br>
+        ${w.example}<br>
+        <span class="small">${w.translation}</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="secondary" onclick="speak(${index})">
+        🔊 예문 듣기
+      </button>
+      <button class="primary" onclick="nextLearn()">
+        ${index===5?"미션 1 시작 →":"다음 표현 →"}
+      </button>
+    </div>
+  `);
+}
+
+function speak(i) {
+  if(!("speechSynthesis" in window)) {
+    alert("이 브라우저에서는 음성 기능을 지원하지 않습니다.");
+    return;
+  }
+  speechSynthesis.cancel();
+  const speech=new SpeechSynthesisUtterance(vocabulary[i].example);
+  speech.lang="en-US";
+  speech.rate=.85;
+  speechSynthesis.speak(speech);
+}
+
+function nextLearn() {
+  index++;
+  if(index<6) showLearn();
+  else {
+    index=0;
+    showMatch();
+  }
+}
+
+function resetAttempts() {
+  attempts=0;
+  finished=false;
+}
+
+function makeOptions(choices,handler) {
+  return choices.map(choice=>`
+    <button class="option"
+      data-answer="${safe(choice)}"
+      onclick="${handler}(this)">
+      ${safe(choice)}
+    </button>
+  `).join("");
+}
+
+function getMeaning(word) {
+  return vocabulary.find(v=>v.word===word).meaning;
+}
+
+function markFinalOptions(button,answer) {
+  document.querySelectorAll(".option").forEach(b=>{
+    b.disabled=true;
+    if(b.dataset.answer===answer) b.classList.add("correct");
+  });
+  if(button.dataset.answer!==answer) button.classList.add("wrong");
+}
+
+function feedback(message,type) {
+  document.getElementById("feedback").innerHTML=`
+    <div class="feedback ${type}">${message}</div>
+  `;
+}
+
+function finishQuestion() {
+  finished=true;
+  document.getElementById("next").disabled=false;
+}
+
+function handleChoice(button,answer,section,question) {
+  if(finished) return;
+  attempts++;
+
+  if(button.dataset.answer===answer) {
+    score++;
+    markFinalOptions(button,answer);
+    feedback("<b>Good job💯</b>","good");
+    finishQuestion();
+    return;
+  }
+
+  if(attempts===1) {
+    button.disabled=true;
+    button.classList.add("wrong");
+
+    // 미션 1에서는 힌트를 제공하지 않음
+    if(section==="의미 연결") {
+      feedback("<b>Try again!</b>","hintBox");
+    } else {
+      feedback(
+        "<b>Try again! 💡</b><br>"+
+        "힌트: "+safe(getMeaning(answer))+
+        "<br>다른 답을 선택해 보세요.",
+        "hintBox"
+      );
+    }
+  } else {
+    markFinalOptions(button,answer);
+    mistakes.push({section,question,answer});
+    feedback(
+      "<b>Nice try! 😊</b><br>"+
+      "아쉽지만 정답은 <b>"+safe(answer)+"</b>입니다.<br>"+
+      "뜻: "+safe(getMeaning(answer)),
+      "bad"
+    );
+    finishQuestion();
+  }
+}
+
+function showMatch() {
+  resetAttempts();
+  progress(27+(index/6)*20);
+  const w=matchOrder[index];
+  const choices=shuffle(vocabulary.map(v=>v.word));
+  show(`
+    <span class="tag">미션 1 · ${index+1}/6</span>
+    <h2>🔗 영어 표현과 뜻 연결하기</h2>
+    <p>한국어 의미에 알맞은 영어 표현을 선택하세요.</p>
+    <div class="card">
+      <h3>${w.meaning}</h3>
+    </div>
+    ${makeOptions(choices,"checkMatch")}
+    <div id="feedback" aria-live="polite"></div>
+    <div class="actions">
+      <button class="primary" id="next" disabled
+        onclick="nextMatch()">다음 문제 →</button>
+    </div>
+    <p class="small">현재 점수: ${score}/18</p>
+  `);
+}
+
+function checkMatch(button) {
+  const w=matchOrder[index];
+  handleChoice(button,w.word,"의미 연결",w.meaning);
+}
+
+function nextMatch() {
+  index++;
+  if(index<6) showMatch();
+  else {
+    index=0;
+    showQuiz();
+  }
+}
+
+function showQuiz() {
+  resetAttempts();
+  progress(48+(index/6)*25);
+  const q=quizOrder[index];
+  const choices=shuffle(vocabulary.map(v=>v.word));
+  show(`
+    <span class="tag">미션 2 · ${index+1}/6</span>
+    <h2>🧠 상황에 알맞은 표현 고르기</h2>
+    <p>상황을 읽고 빈칸에 알맞은 표현을 선택하세요.</p>
+    <div class="card">
+      <p>${q.situation}</p>
+      <h3 style="font-size:20px">${q.sentence}</h3>
+    </div>
+    ${makeOptions(choices,"checkQuiz")}
+    <div id="feedback" aria-live="polite"></div>
+    <div class="actions">
+      <button class="primary" id="next" disabled
+        onclick="nextQuiz()">다음 문제 →</button>
+    </div>
+    <p class="small">현재 점수: ${score}/18</p>
+  `);
+}
+
+function checkQuiz(button) {
+  const q=quizOrder[index];
+  handleChoice(button,q.answer,"문맥 이해",q.sentence);
+}
+
+function nextQuiz() {
+  index++;
+  if(index<6) showQuiz();
+  else {
+    index=0;
+    showTyping();
+  }
+}
+
+function showTyping() {
+  resetAttempts();
+  progress(74+(index/6)*23);
+  const q=typingOrder[index];
+  show(`
+    <span class="tag">미션 3 · ${index+1}/6</span>
+    <h2>✍️ 영어 표현 직접 사용하기</h2>
+    <p>빈칸에 들어갈 영어 표현을 직접 입력하세요.</p>
+    <div class="card">
+      <h3 style="font-size:20px">${q.sentence}</h3>
+    </div>
+    <input id="answerInput" type="text"
+      placeholder="영어 표현 입력하기"
+      autocomplete="off" spellcheck="false">
+    <div class="actions">
+      <button class="primary" id="checkButton"
+        onclick="checkTyping()">정답 확인</button>
+    </div>
+    <div id="feedback" aria-live="polite"></div>
+    <div class="actions">
+      <button class="primary" id="next" disabled
+        onclick="nextTyping()">다음 문제 →</button>
+    </div>
+    <p class="small">현재 점수: ${score}/18</p>
+  `);
+
+  document.getElementById("answerInput")
+    .addEventListener("keydown",e=>{
+      if(e.key==="Enter") {
+        if(!finished) checkTyping();
+        else nextTyping();
+      }
+    });
+}
+
+function normalize(text) {
+  return text.trim().toLowerCase().replace(/\s+/g," ");
+}
+
+function checkTyping() {
+  if(finished) return;
+
+  const input=document.getElementById("answerInput");
+  const value=normalize(input.value);
+  if(!value) {
+    feedback("먼저 답을 입력해 주세요.","bad");
+    return;
+  }
+
+  const q=typingOrder[index];
+  attempts++;
+
+  if(value===normalize(q.answer)) {
+    score++;
+    input.disabled=true;
+    document.getElementById("checkButton").disabled=true;
+    feedback("<b>Good job💯</b>","good");
+    finishQuestion();
+    return;
+  }
+
+  if(attempts===1) {
+    feedback(
+      "<b>Try again! 💡</b><br>"+
+      "힌트: "+safe(getMeaning(q.answer))+"<br>"+
+      "첫 글자: <b>"+q.answer[0].toUpperCase()+"</b><br>"+
+      "다시 입력해 보세요.",
+      "hintBox"
+    );
+    input.value="";
+    input.focus();
+  } else {
+    mistakes.push({
+      section:"문장 완성",
+      question:q.sentence,
+      answer:q.answer
+    });
+    input.disabled=true;
+    document.getElementById("checkButton").disabled=true;
+    feedback(
+      "<b>Nice try! 😊</b><br>"+
+      "아쉽지만 정답은 <b>"+safe(q.answer)+"</b>입니다.<br>"+
+      "뜻: "+safe(getMeaning(q.answer)),
+      "bad"
+    );
+    finishQuestion();
+  }
+}
+
+function nextTyping() {
+  index++;
+  if(index<6) showTyping();
+  else showResults();
+}
+
+function showResults() {
+  progress(100);
+  const percent=Math.round(score/18*100);
+  let message;
+
+  if(score>=16) {
+    message="🏆 훌륭해요! 영어 표현을 아주 잘 이해하고 있어요.";
+  } else if(score>=12) {
+    message="🌟 잘했어요! 틀린 표현을 복습하면 더 좋아질 거예요.";
+  } else {
+    message="💪 수고했어요! 표현을 다시 살펴보고 도전해 보세요.";
+  }
+
+  const reviews=mistakes.length
+    ?mistakes.map(m=>`
+      <div class="review">
+        <span class="small">${safe(m.section)}</span><br>
+        ${safe(m.question)}<br>
+        <b>정답: ${safe(m.answer)}</b>
+      </div>
+    `).join("")
+    :"<p>모든 문제를 맞혔어요! 정말 훌륭해요!</p>";
+
+  show(`
+    <span class="tag">모든 미션 완료!</span>
+    <h2>🎉 학습 결과</h2>
+    <div class="score">${score} / 18</div>
+    <p style="text-align:center"><b>정답률 ${percent}%</b></p>
+    <p style="text-align:center">${message}</p>
+    <h3>📋 오답 복습</h3>
+    <p class="small">
+      두 번의 시도에서도 맞히지 못한 문제를 확인해 보세요.
+    </p>
+    ${reviews}
+    <div class="actions">
+      <button class="secondary" onclick="beginLearn()">
+        표현 다시 학습하기
+      </button>
+      <button class="primary" onclick="start()">
+        처음부터 다시 도전하기 ↻
+      </button>
+    </div>
+  `);
+}
+
+showIntro();
+</script>
+</body>
+</html>
